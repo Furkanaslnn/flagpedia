@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
 } from "react-native";
 import { SvgUri } from "react-native-svg";
 import { useRouter } from "expo-router";
@@ -32,7 +33,11 @@ export interface CountryDetailType {
 
 export default function CountryList() {
   const [countries, setCountries] = useState<CountryDetailType[]>([]);
+  const [filteredCountries, setFilteredCountries] = useState<
+    CountryDetailType[]
+  >([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState<string>("");
   const [flagsLoaded, setFlagsLoaded] = useState<{ [key: string]: boolean }>(
     {}
   );
@@ -43,7 +48,12 @@ export default function CountryList() {
     fetch("https://countries-api-abhishek.vercel.app/countries")
       .then((res) => res.json())
       .then((json) => {
-        setCountries(json.data);
+        const filtered = json.data.filter(
+          (country: CountryDetailType) =>
+            country.name.toLowerCase() !== "xenocera"
+        );
+        setCountries(filtered);
+        setFilteredCountries(filtered);
         setLoading(false);
       })
       .catch((err) => {
@@ -51,6 +61,14 @@ export default function CountryList() {
         setLoading(false);
       });
   }, []);
+
+  const handleSearch = (text: string) => {
+    setSearch(text);
+    const filtered = countries.filter((country) =>
+      country.name.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredCountries(filtered);
+  };
 
   const handleFlagLoad = (name: string) => {
     setFlagsLoaded((prev) => ({ ...prev, [name]: true }));
@@ -85,7 +103,7 @@ export default function CountryList() {
       <View
         style={{
           width: 30,
-          height: 20,
+          height: 80,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -111,11 +129,25 @@ export default function CountryList() {
           SELECT A COUNTRY
         </Text>
 
+        <TextInput
+          value={search}
+          onChangeText={handleSearch}
+          placeholder="Search countries..."
+          placeholderTextColor="#aaa"
+          style={{
+            backgroundColor: "#202020",
+            padding: 10,
+            borderRadius: 8,
+            color: "white",
+            marginBottom: 16,
+          }}
+        />
+
         {loading ? (
           <ActivityIndicator size="large" color="#ffffff" />
         ) : (
           <FlatList
-            data={countries}
+            data={filteredCountries}
             keyExtractor={(item, index) => `${item.name}-${index}`}
             renderItem={renderItem}
             initialNumToRender={15}
