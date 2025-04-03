@@ -40,8 +40,8 @@ export default function CountryDetail() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-900 px-4">
-      <ScrollView className="flex-1 bg-neutral-900 px-4 pt-12">
+    <SafeAreaView className="flex-1 bg-neutral-900 px-4 p-4">
+      <ScrollView className="flex-1 bg-neutral-900 px-4 py-4">
         <View className="items-center mb-6">
           {!flagLoaded && (
             <ActivityIndicator size="large" color="#ffffff" className="mb-4" />

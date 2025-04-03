@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,14 +7,9 @@ import {
   ActivityIndicator,
   TextInput,
 } from "react-native";
-import { SvgUri } from "react-native-svg";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-
-interface Country {
-  name: string;
-  flag: string;
-}
+import CountryItem from "../components/CountryItem"; // yolunu projenin yapısına göre değiştir
 
 export interface CountryDetailType {
   name: string;
@@ -41,6 +36,25 @@ export default function CountryList() {
   const [flagsLoaded, setFlagsLoaded] = useState<{ [key: string]: boolean }>(
     {}
   );
+  const renderFooter = () => {
+    return (
+      <View style={{ paddingVertical: 16 }}>
+        <ActivityIndicator size="small" color="#aaa" />
+      </View>
+    );
+  };
+  const [showFooter, setShowFooter] = useState(false);
+
+  const handleEndReached = () => {
+    // Eğer zaten gösteriliyorsa tekrar göstermeyelim
+    if (!showFooter) {
+      setShowFooter(true);
+      // Simüle edilmiş gecikme — gerçek pagination varsa buraya fetch eklersin
+      setTimeout(() => {
+        setShowFooter(false);
+      }, 1000);
+    }
+  };
 
   const router = useRouter();
 
@@ -48,12 +62,25 @@ export default function CountryList() {
     fetch("https://countries-api-abhishek.vercel.app/countries")
       .then((res) => res.json())
       .then((json) => {
-        const filtered = json.data.filter(
+        // Xenocera'yı atla
+        const filteredRaw = json.data.filter(
           (country: CountryDetailType) =>
             country.name.toLowerCase() !== "xenocera"
         );
-        setCountries(filtered);
-        setFilteredCountries(filtered);
+
+        // Aynı isimdeki ülkeleri sadece bir kez al
+        const seen = new Set();
+        const uniqueCountries = filteredRaw.filter(
+          (country: CountryDetailType) => {
+            const normalizedName = country.name.trim().toLowerCase();
+            if (seen.has(normalizedName)) return false;
+            seen.add(normalizedName);
+            return true;
+          }
+        );
+
+        setCountries(uniqueCountries);
+        setFilteredCountries(uniqueCountries);
         setLoading(false);
       })
       .catch((err) => {
@@ -95,67 +122,54 @@ export default function CountryList() {
     });
   };
 
-  const renderItem = ({ item }: { item: CountryDetailType }) => (
-    <TouchableOpacity
-      className="flex-row items-center bg-neutral-800 p-3 rounded-lg mb-2"
-      onPress={() => handleClick(item)}
-    >
-      <View
-        style={{
-          width: 30,
-          height: 80,
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        {!flagsLoaded[item.name] && (
-          <ActivityIndicator size="small" color="#fff" />
-        )}
-        <SvgUri
-          uri={item.flag}
-          width={30}
-          height={20}
-          onLoad={() => handleFlagLoad(item.name)}
-        />
-      </View>
-      <Text className="text-white text-lg ml-3 font-semibold">{item.name}</Text>
-    </TouchableOpacity>
+  const renderItem = useCallback(
+    ({ item }: { item: CountryDetailType }) => (
+      <CountryItem
+        item={item}
+        onPress={() => handleClick(item)}
+        onFlagLoad={() => handleFlagLoad(item.name)}
+        flagLoaded={flagsLoaded[item.name]}
+      />
+    ),
+    [flagsLoaded]
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-900 px-4">
-      <View className="flex-1 bg-neutral-900 px-4 pt-12">
-        <Text className="text-white text-xl mb-4 text-center font-bold">
-          SELECT A COUNTRY
-        </Text>
+    <SafeAreaView className="flex-1 bg-neutral-900 px-4 pt-5">
+      <Text className="text-white text-xl mb-4 text-center font-bold">
+        SELECT A COUNTRY
+      </Text>
 
-        <TextInput
-          value={search}
-          onChangeText={handleSearch}
-          placeholder="Search countries..."
-          placeholderTextColor="#aaa"
-          style={{
-            backgroundColor: "#202020",
-            padding: 10,
-            borderRadius: 8,
-            color: "white",
-            marginBottom: 16,
-          }}
+      <TextInput
+        value={search}
+        onChangeText={handleSearch}
+        placeholder="Search countries..."
+        placeholderTextColor="#aaa"
+        style={{
+          backgroundColor: "#202020",
+          padding: 10,
+          borderRadius: 8,
+          color: "white",
+          marginBottom: 16,
+        }}
+      />
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#ffffff" />
+      ) : (
+        <FlatList
+          data={filteredCountries}
+          keyExtractor={(item) => item.name}
+          renderItem={renderItem}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          ListFooterComponent={showFooter ? renderFooter : null}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.3} // %30 altına geldiğinde tetikler
         />
-
-        {loading ? (
-          <ActivityIndicator size="large" color="#ffffff" />
-        ) : (
-          <FlatList
-            data={filteredCountries}
-            keyExtractor={(item, index) => `${item.name}-${index}`}
-            renderItem={renderItem}
-            initialNumToRender={15}
-            maxToRenderPerBatch={20}
-            windowSize={10}
-          />
-        )}
-      </View>
+      )}
     </SafeAreaView>
   );
 }

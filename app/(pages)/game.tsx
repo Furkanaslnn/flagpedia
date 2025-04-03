@@ -11,7 +11,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import countryData from "../../assets/data.json";
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
 
 interface Country {
   name: string;
