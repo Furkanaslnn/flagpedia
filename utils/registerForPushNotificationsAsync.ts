@@ -52,13 +52,14 @@ export async function registerForPushNotificationsAsync(): Promise<string> {
 
 export async function sendPushTokenToServer(userId: string, token: string) {
   try {
+    const API_KEY = process.env.EXPO_PUBLIC_API_KEY as string;
     const response = await fetch(
       "https://server-cjqd.onrender.com/api/push-token",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": "j12inb321ASD890uhn2asD10eAS1km29e8120", // Backend'deki API key
+          "x-api-key": API_KEY, // Backend'deki API key
         },
         body: JSON.stringify({
           userId,
