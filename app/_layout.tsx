@@ -2,17 +2,25 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css"; // Tailwind ya da global stil dosyan
+import { NotificationProvider } from "@/contex/NotificationsContex";
+import * as Notifications from "expo-notifications";
+import { useEffect } from "react";
 
-import * as SystemUI from "expo-system-ui";
-
-// Navigation bar rengini değiştir
-SystemUI.setBackgroundColorAsync("#171717"); // örneğin beyaz
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
-      <StatusBar style="light" backgroundColor="#171717" translucent />
-      <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaProvider>
+    <NotificationProvider>
+      <SafeAreaProvider>
+        <StatusBar style="light" backgroundColor="#171717" translucent />
+        <Stack screenOptions={{ headerShown: false }} />
+      </SafeAreaProvider>
+    </NotificationProvider>
   );
 }

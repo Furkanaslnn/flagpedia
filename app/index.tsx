@@ -1,8 +1,44 @@
+import { useNotification } from "@/contex/NotificationsContex";
+import {
+  registerForPushNotificationsAsync,
+  sendPushTokenToServer,
+} from "@/utils/registerForPushNotificationsAsync";
+
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import { TouchableOpacity, Image, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import uuid from "react-native-uuid";
+
+export async function getUniqueDeviceId() {
+  let id = await AsyncStorage.getItem("device_id");
+  if (!id) {
+    id = uuid.v4().toString();
+    await AsyncStorage.setItem("device_id", id);
+  }
+  return id;
+}
+
 export default function Index() {
+  const [userId, setUserId] = useState<string | null>(null);
+  useEffect(() => {
+    const setupPush = async () => {
+      try {
+        const uniqueId = await getUniqueDeviceId();
+        setUserId(uniqueId); // state'e kaydet
+
+        const token = await registerForPushNotificationsAsync();
+        await sendPushTokenToServer(uniqueId, token);
+      } catch (err) {
+        console.error("Bildirim kurulumu sırasında hata:", err);
+      }
+    };
+
+    setupPush();
+  }, []);
+
   const globalImage = require("../assets/images/global.png");
   const gameImage = require("../assets/images/game.png");
 
@@ -22,6 +58,8 @@ export default function Index() {
       link: "game",
     },
   ];
+
+  const { notification, expoPushToken, error } = useNotification();
 
   return (
     <SafeAreaView className="flex-1 bg-neutral-900 px-4">
