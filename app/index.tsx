@@ -86,6 +86,11 @@ export default function Index() {
           </TouchableOpacity>
         ))}
       </View>
+      <View className="flex justify-center items-center mb-10">
+        <TouchableOpacity onPress={() => router.push("/(pages)/contact")}>
+          <Text className="text-white border-1 border-red-600">İletişim</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
